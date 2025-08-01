@@ -10,6 +10,21 @@ class BookController extends Controller
 {
     return response()->json(Book::all());
 }
+public function show($id)
+{
+    $book = Book::find($id);
+
+    if (!$book) {
+        return response()->json([
+            'message' => 'Book not found',
+        ], 404);
+    }
+
+    return response()->json([
+        'data' => $book,
+    ]);
+}
+
      public function store(Request $request)
     {
         $validated = $request->validate([
@@ -49,6 +64,7 @@ class BookController extends Controller
         'data' => $book,
     ],200);
 }
+
 public function destroy($id)
 {
     $book = Book::findOrFail($id);
@@ -58,4 +74,23 @@ public function destroy($id)
         'message' => 'Books are  deleted successfully',
     ],200);
 }
+
+public function updatepartial(Request $request,$id)
+{
+    $book = Book::findOrFail($id);
+
+    $validated = $request->validate([
+        'description' => 'nullable|string',
+        'price' => 'nullable|numeric|min:0',
+    ]);
+
+    $book->update($validated);
+
+    return response()->json([
+        'message' => 'Book updated successfully',
+        'data' => $book,
+    ],200);
+}
+
+
 }

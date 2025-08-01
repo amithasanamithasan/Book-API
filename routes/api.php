@@ -24,7 +24,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Book APIs
     Route::post('/books', [BookController::class, 'store']);
+    Route::get('/books/{id}', [BookController::class, 'show']);
     Route::get('/books', [BookController::class, 'index']);
     Route::put('/books/{id}', [BookController::class, 'update']);
+    Route::patch('/books/{id}', [BookController::class, 'updatepartial']);
     Route::delete('/books/{id}', [BookController::class, 'destroy']);
 });
