@@ -6,13 +6,27 @@ use Illuminate\Http\Request;
 
 class BookController extends Controller
 {
-    public function index()
-{
-    return response()->json(Book::all());
-}
-public function show($id)
-{
-    $book = Book::find($id);
+public function index()
+    {
+        return Book::all()->map(function ($book) {
+            return [
+                'id' => $book->id,
+                'title' => $book->title,
+                'author' => $book->author,
+                'published_year' => $book->published_year,
+                'isbn' => $book->isbn,
+                'description' => $book->description,
+                'price' => $book->price,
+                'picture' => $book->picture 
+                    ? asset('storage/' . $book->picture) 
+                    : null,
+            ];
+        });
+    }
+
+    public function show($id)
+    {
+        $book = Book::find($id);
 
     if (!$book) {
         return response()->json([
@@ -25,9 +39,10 @@ public function show($id)
     ]);
 }
 
-     public function store(Request $request)
+      public function store(Request $request)
     {
         $validated = $request->validate([
+            'picture' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'published_year' => 'nullable|digits:4|integer|min:1000|max:' . date('Y'),
@@ -36,19 +51,34 @@ public function show($id)
             'price' => 'required|numeric|min:0',
         ]);
 
+        // Save picture if exists
+        if ($request->hasFile('picture')) {
+            $fileName = time() . '_' . $request->picture->getClientOriginalName();
+            $filePath = $request->picture->storeAs('books', $fileName, 'public');
+
+            // Store only relative path in DB (without /storage/)
+            $validated['picture'] = $filePath; // e.g. books/filename.png
+        }
+
         $book = Book::create($validated);
 
         return response()->json([
             'message' => 'Book created successfully',
-            'data' => $book,
+            'data' => [
+                ...$book->toArray(),
+                'picture' => $book->picture 
+                    ? asset('storage/' . $book->picture) 
+                    : null,
+            ],
         ], 201);
-        
     }
+
     public function update(Request $request, $id)
 {
     $book = Book::findOrFail($id);
 
     $validated = $request->validate([
+        'picture' => 'nullable|string|max:255',
         'title' => 'sometimes|required|string|max:255',
         'author' => 'sometimes|required|string|max:255',
         'published_year' => 'nullable|digits:4|integer|min:1000|max:' . date('Y'),
